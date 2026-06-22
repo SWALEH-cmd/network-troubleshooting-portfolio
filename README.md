@@ -133,5 +133,62 @@ Below is the proof showing the connection timing out and being dropped by the pe
 ## Result & Customer Resolution
 The network security architecture was successfully upgraded to an enterprise-standard multi-layer defense topology. By combining stateless subnet constraints on the gateway with stateful instance rules on the database host, lateral discovery paths were eliminated. Verification audits confirmed that authorized application queries pass seamlessly, while unauthorized perimeter probes are fully dropped before reaching the database stack.
 
+
+
+
+------
+
+# Case ID: NET-SEC-004 - SSL/TLS Handshake Validation & Certificate Session Troubleshooting
+
+## Situation
+An enterprise web application migrating to a secure HTTPS deployment was failing to validate cryptographic signatures. Secure network traffic could not establish baseline sessions over the wire, resulting in total protocol drops and connection failure messages during client verification attempts.
+
 ---
+
+## Task
+My objective as the Cloud Support Associate was to deploy an isolated, lightweight cryptographic engine, generate a valid transport architecture keypair, explicitly configure Nginx to listen on the secure HTTPS port, and execute a verified end-to-end TLS handshake from an external client node.
+
+---
+
+## Action & Verification Steps
+
+### 1. Generate the Cryptographic Keypair
+On the Web Server Node, I executed an OpenSSL keygen sequence to mint an X.509 transport certificate alongside a 2048-bit RSA private key block to serve as the server's identity anchor:
+
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/webserver.key -out /etc/ssl/certs/webserver.crt
+
+VERIFICATION SCREENSHOT #1: CRYPTOGRAPHIC KEY GENERATION SUCCESS
+Below is the proof showing the clean generation of the RSA certificates with automated subject parameter tagging:
+
+![Certificate Generation](cert_generation_success.png)
+
+---
+
+### 2. Configure Nginx and Verify Secure Port Socket Binding
+On the Web Server Node, I mapped the new certificate paths into the Nginx default configuration file, restarted the daemon, and ran the network status utility to confirm the host was actively listening on port 443:
+
+sudo systemctl restart nginx
+sudo ss -tulpn | grep 443
+
+VERIFICATION SCREENSHOT #2: SECURE PORT LISTENING STATUS
+Below is the proof showing the network daemon actively running, binding to the secure port 443 socket, and preparing for incoming handshakes:
+
+![Secure Port Active](secure_port_listening.png)
+
+---
+
+### 3. Verify End-to-End Cryptographic Handshake Traversal
+From the external Client Node (Jump Box), I initiated an explicit verbose connection request targeting the Web Server IP to watch the asymmetric parameter negotiation exchange in real-time:
+
+curl -Iv -k https://192.168.10.129
+
+VERIFICATION SCREENSHOT #3: SUCCESSFUL TLS HANDSHAKE TRAVERSAL
+Below is the proof showing the clean negotiation stream, tracking the protocol hello packets, certificate hand-offs, and session validation parameters across the wire:
+
+![TLS Handshake Success](tls_handshake_success.png)
+
+---
+
+## Result & Customer Resolution
+The transport layer encryption path was successfully verified and deployed. By updating the Nginx configuration and testing directly via an external client node, I proved that the host's networking sockets are fully capable of handling asymmetric handshakes and sustaining secure, encrypted client sessions. This clears the security isolation review for production tier data transit.
 
