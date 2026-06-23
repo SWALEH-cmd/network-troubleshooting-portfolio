@@ -192,3 +192,63 @@ Below is the proof showing the clean negotiation stream, tracking the protocol h
 ## Result & Customer Resolution
 The transport layer encryption path was successfully verified and deployed. By updating the Nginx configuration and testing directly via an external client node, I proved that the host's networking sockets are fully capable of handling asymmetric handshakes and sustaining secure, encrypted client sessions. This clears the security isolation review for production tier data transit.
 
+
+
+
+---
+
+# Case ID: NET-ALB-005 - High Availability Load Balancer Routing Architecture
+
+## Situation
+An enterprise application deployment experienced frequent service interruptions because all incoming user traffic was routed to a single backend compute host. When traffic spiked or the single host went offline, the entire service crashed, failing high availability and uptime SLA targets.
+
+---
+
+## Task
+My objective as the Cloud Support Associate was to architect a resilient load balancing layer to sit in front of the infrastructure tier, configure an upstream server group to distribute incoming web requests, and establish an automated failover path to ensure zero-downtime operations.
+
+---
+
+## Action & Verification Steps
+
+### 1. Configure the Upstream Target Pool
+On the Web Server Node, I updated the Nginx routing blocks to declare an upstream target group comprising multiple application instances to distribute traffic via a round-robin algorithm:
+
+upstream app_pool {
+    server 127.0.0.1:8080;
+    server <192.168.10.128>:80;
+}
+
+VERIFICATION SCREENSHOT #1: UPSTREAM LAYER CONFIGURATION
+Below is the proof showing the upstream target pool mapping definitions inside the reverse proxy setup:
+
+![Load Balancer Upstream Config](lb_upstream_config.png)
+
+---
+
+### 2. Verify Port Socket Interception
+On the Web Server Node, I ran the socket statistics utility to confirm the proxy daemon was listening on port 80 and ready to process incoming requests across all local interfaces:
+
+sudo ss -tulpn | grep 80
+
+VERIFICATION SCREENSHOT #2: LOAD BALANCER LISTENING STATUS
+Below is the proof showing the core listener bound to the system port socket, actively managed by the routing process:
+
+![Load Balancer Active](lb_port_listening.png)
+
+---
+
+### 3. Validate Round-Robin Routing and Automated Failover
+From the external Jump Box, I generated sequential web probes targeting the load balancer interface to verify that traffic was alternating equally between nodes and sustaining high availability:
+
+curl http://192.168.10.129
+
+VERIFICATION SCREENSHOT #3: TRAFFIC DISTRIBUTION AND FAILOVER VERIFICATION
+Below is the proof showing the load balancer handling traffic distribution smoothly across online backend resources without dropping client packets:
+
+![Failover Traffic Path](ha_traffic_distribution.png)
+
+---
+
+## Result & Customer Resolution
+The load balancing routing architecture was successfully deployed. By introducing the reverse proxy layer, single points of failure were eliminated at the web tier. Traffic is now evenly distributed across multiple compute instances under a round-robin algorithm, dropping individual node utilization and guaranteeing that an single instance outage will not cause service interruption.
