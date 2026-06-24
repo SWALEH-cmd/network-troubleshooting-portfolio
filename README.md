@@ -252,3 +252,60 @@ Below is the proof showing the load balancer handling traffic distribution smoot
 
 ## Result & Customer Resolution
 The load balancing routing architecture was successfully deployed. By introducing the reverse proxy layer, single points of failure were eliminated at the web tier. Traffic is now evenly distributed across multiple compute instances under a round-robin algorithm, dropping individual node utilization and guaranteeing that an single instance outage will not cause service interruption.
+
+
+
+---
+
+# Case ID: NET-VPN-007 - Hybrid Link Path MTU Discovery (PMTUD) Failure
+
+## Situation
+An enterprise customer utilizing a hybrid Site-to-Site VPN link reported that while basic small-packet applications (like SSH) connected successfully, large application data transfers and file synchronizations over the tunnel would randomly freeze and time out.
+
+---
+
+## Task
+My objective as the Cloud Support Associate was to investigate the hybrid transit path from the on-premises environment, isolate potential Maximum Transmission Unit (MTU) mismatches, and determine the exact path limits causing packet drop over the secure tunnel.
+
+---
+
+## Action & Verification Steps
+
+### 1. Verify Basic Network Layer End-to-End Reachability
+From the On-Premises Jump Box, I executed a standard low-byte ICMP echo probe targeting the private cloud database node to confirm baseline Layer 3 connectivity was operational:
+
+ping -c 3 <YOUR_DB_SERVER_IP>
+
+VERIFICATION SCREENSHOT #1: BASELINE CONNECTIVITY
+Below is the proof showing successful low-byte packet delivery across the hybrid environment:
+
+![VPN Basic Ping](vpn_basic_ping.png)
+
+---
+
+### 2. Isolate MTU Clipping and Fragmentation Constraints
+To simulate the large data transfer timeouts, I initiated an oversized 1500-byte probe with the Don't Fragment (DF) flag enforced to detect where the tunnel interface was dropping packets:
+
+ping -c 3 -s 1500 -M do <YOUR_DB_SERVER_IP>
+
+VERIFICATION SCREENSHOT #2: PATH MTU BREAKDOWN DETECTION
+Below is the proof showing the network kernel rejecting the payload due to tunnel size enforcement limits:
+
+![VPN MTU Clipping](vpn_mtu_clipping.png)
+
+---
+
+### 3. Optimize Safe Transmission Ceiling for Hybrid Link
+I iteratively decreased the data payload size down to an optimized 1300 bytes while maintaining the DF flag to identify the absolute clear transport threshold across the hybrid VPN link:
+
+ping -c 3 -s 1300 -M do <YOUR_DB_SERVER_IP>
+
+VERIFICATION SCREENSHOT #3: TUNNEL PATH FREEDOM VALIDATION
+Below is the proof showing optimized data payloads passing cleanly through the secure network boundary without experiencing drops:
+
+![VPN MTU Resolved](vpn_mtu_resolved.png)
+
+---
+
+## Result & Customer Resolution
+The hybrid network performance issue was successfully isolated. The root cause was identified as a Path MTU Discovery failure over the secure VPN link. By explicitly demonstrating the packet size ceiling to the customer, we successfully adjusted their router configuration clamping limits to prevent fragmentation drops, completely resolving the file transfer freeze issues.
