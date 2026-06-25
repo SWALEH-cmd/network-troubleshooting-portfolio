@@ -309,3 +309,59 @@ Below is the proof showing optimized data payloads passing cleanly through the s
 
 ## Result & Customer Resolution
 The hybrid network performance issue was successfully isolated. The root cause was identified as a Path MTU Discovery failure over the secure VPN link. By explicitly demonstrating the packet size ceiling to the customer, we successfully adjusted their router configuration clamping limits to prevent fragmentation drops, completely resolving the file transfer freeze issues.
+
+
+---
+
+# Case ID: NET-DNS-009 - Client-Side Domain Resolution & TTL Cache Discrepancy
+
+## Situation
+An enterprise customer opened a high-severity ticket stating that after performing a cloud backend migration, several internal client workstations were completely unable to reach the updated application endpoints, resulting in application connection dropouts.
+
+---
+
+## Task
+My objective as the Cloud Support Associate was to inspect the domain name resolution chain from an affected client environment, analyze the Time to Live (TTL) caching behavior to ensure updates were propagating cleanly, and rule out any conflicting local address overrides.
+
+---
+
+## Action & Verification Steps
+
+### 1. Execute Baseline Name Resolution Probe
+From the client terminal simulation on the Jump Box, I utilized the name service lookup utility to query the target domain and confirm if the assigned upstream recursive resolver was returning valid IP mappings:
+
+nslookup google.com
+
+VERIFICATION SCREENSHOT #1: RECURSIVE RESOLVER MAPPING
+Below is the proof showing the default nameserver responding with the active IP mapping records:
+
+![DNS NSLookup Baseline](dns_nslookup_baseline.png)
+
+---
+
+### 2. Evaluate Path Caching and TTL Constraints
+To diagnose potential caching freezes impacting the client session, I ran a verbose domain information groper query to pull the exact authoritative headers and isolate the remaining cache countdown timer:
+
+dig google.com
+
+VERIFICATION SCREENSHOT #2: TTL CACHE ANALYSIS
+Below is the proof highlighting the active ANSWER SECTION and the running TTL seconds remaining before cache invalidation:
+
+![DNS Dig Analysis](dns_dig_analysis.png)
+
+---
+
+### 3. Audit Local Name Resolution Records
+To ensure the local machine was not actively bypassing network nameservers due to a hardcoded override configuration, I ran a system audit on the static hosts data storage file:
+
+cat /etc/hosts
+
+VERIFICATION SCREENSHOT #3: LOCAL OVERRIDE INSPECTION
+Below is the proof verifying that no unauthorized or misconfigured static network records were short-circuiting standard DNS resolution paths:
+
+![DNS Local Hosts](dns_local_hosts.png)
+
+---
+
+## Result & Customer Resolution
+The resolution pathway was successfully mapped and validated. By utilizing diagnostic utilities, I proved that the upstream cloud nameservers were responding accurately, and isolated the client issue down to downstream local caching delays. The customer was instructed on how to clear local client resolver caches, instantly restoring application access and resolving the ticket.
